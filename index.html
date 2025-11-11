@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="hi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>QR Menu — Chill Beans</title>
+  <style>
+    body{margin:0;font-family:system-ui,Roboto,Arial;background:#071021;color:#e6eef6}
+    .wrap{max-width:1000px;margin:12px auto;padding:12px}
+    header{display:flex;gap:12px;align-items:center}
+    .logo{width:56px;height:56px;border-radius:10px;background:linear-gradient(135deg,#ffb86b,#ff6b6b);display:flex;align-items:center;justify-content:center;font-weight:800;color:#071021}
+    h1{margin:0;font-size:20px}
+    .sub{color:#9aa4b2;font-size:13px}
+    .controls{margin:12px 0;display:flex;gap:8px;flex-wrap:wrap}
+    input,select{padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:inherit}
+    .grid{display:grid;gap:10px;grid-template-columns:1fr}
+    @media(min-width:720px){.grid{grid-template-columns:repeat(2,1fr)}}
+    @media(min-width:1000px){.grid{grid-template-columns:repeat(3,1fr)}}
+    .card{background:rgba(255,255,255,0.02);padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.03)}
+    .thumb{width:100%;height:140px;object-fit:cover;border-radius:8px;background:#061323}
+    .row{display:flex;justify-content:space-between;align-items:center}
+    .name{font-weight:700}
+    .price{color:#ffb86b;font-weight:800}
+    .desc{color:#9aa4b2;font-size:13px}
+    .loader{padding:20px;color:#9aa4b2;text-align:center}
+    .error{background:#3b1c1c;color:#ffd3d3;padding:10px;border-radius:8px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="logo">CB</div>
+      <div>
+        <h1>Chill Beans — Menu</h1>
+        <div class="sub" id="tableInfo">Table not set</div>
+      </div>
+    </header>
+
+    <div class="controls">
+      <input id="search" placeholder="Search item or desc" />
+      <select id="cat"><option value="">All Categories</option></select>
+      <button id="refresh">Refresh</button>
+      <a id="qrLink" style="margin-left:auto" target="_blank">Generate QR</a>
+    </div>
+
+    <div id="status" class="loader">Loading menu…</div>
+    <div id="grid" class="grid" style="display:none"></div>
+  </div>
+
+<script>
+(async function(){
+  // === TERA SHEET CSV LINK (maine teri published link ka CSV format use kiya) ===
+  const CSV_PUB_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS73gWSiVe5WRCo6RtCVYumtjjnOxGSX3PT4fGgRY0SZYtlUh--ZjxkNR38KKlKIboitEIz9Sj5ij8p/pub?output=csv";
+  // =======================================================================
+
+  const status = document.getElementById('status');
+  const grid = document.getElementById('grid');
+  const cat = document.getElementById('cat');
+  const search = document.getElementById('search');
+  const refresh = document.getElementById('refresh');
+  const qrLink = document.getElementById('qrLink');
+  const tableInfo = document.getElementById('tableInfo');
+
+  // table param
+  const t = new URLSearchParams(location.search).get('table');
+  if(t) tableInfo.textContent = 'Table: ' + t;
+
+  function parseCSV(text){
+    const rows=[]; let cur=[], field='', inQ=false;
+    for(let i=0;i<text.length;i++){
+      const ch = text[i];
+      if(inQ){
+        if(ch === '"'){
+          if(text[i+1]==='"'){ field+='"'; i++; } else inQ=false;
+        } else field+=ch;
+      } else {
+        if(ch === '"'){ inQ=true; }
+        else if(ch === ','){ cur.push(field); field=''; }
+        else if(ch === '\r'){ continue; }
+        else if(ch === '\n'){ cur.push(field); rows.push(cur); cur=[]; field=''; }
+        else field+=ch;
+      }
+    }
+    if(field!=='' || cur.length) { cur.push(field); rows.push(cur); }
+    return rows;
+  }
+
+  function escape(s){ return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+  async function load(){
+    try{
+      status.textContent = 'Fetching menu...';
+      const r = await fetch(CSV_PUB_URL, {cache:'no-store'});
+      if(!r.ok) throw new Error('Sheet fetch failed: ' + r.status);
+      const txt = await r.text();
+      const rows = parseCSV(txt);
+      if(!rows || rows.length < 2) throw new Error('No data found in sheet');
+      const header = rows[0].map(h=>h.trim().toLowerCase());
+      const items = rows.slice(1).map(rw=>{
+        const o={};
+        for(let i=0;i<header.length;i++) o[header[i]] = rw[i] ? rw[i].trim() : '';
+        return o;
+      });
+      render(items);
+    } catch(err){
+      status.innerHTML = '<div class="error">Error: ' + escape(err.message || err) + '</div>';
+      console.error(err);
+    }
+  }
+
+  function render(items){
+    // populate categories
+    const cats = new Set();
+    items.forEach(it=>{ if(it.category) cats.add(it.category); });
+    cat.innerHTML = '<option value=\"\">All Categories</option>' + [...cats].map(c=>`<option value="${escape(c)}">${escape(c)}</option>`).join('');
+
+    // render grid based on filters
+    function show(){
+      const q = (search.value||'').toLowerCase();
+      const c = cat.value;
+      const filtered = items.filter(it=>{
+        const matchesCat = !c || (it.category||'').toLowerCase() === c.toLowerCase();
+        const hay = ((it.name||'')+' '+(it.description||'')).toLowerCase();
+        const matchesQ = !q || hay.includes(q);
+        return matchesCat && matchesQ;
+      });
+      if(filtered.length === 0) { grid.innerHTML = '<div class="loader">No items match</div>'; return; }
+      grid.innerHTML = filtered.map(it=>{
+        const img = it.image_url || it.image || '';
+        const src = img ? escape(img) : 'https://i.imgur.com/6Y4bX0C.png';
+        return `<div class="card">
+          <img class="thumb" src="${src}" loading="lazy" onerror="this.onerror=null;this.src='https://i.imgur.com/6Y4bX0C.png'"/>
+          <div class="row"><div class="name">${escape(it.name)}</div><div class="price">${escape(it.price)}</div></div>
+          <div class="desc">${escape(it.description)}</div>
+          <div class="meta">Category: ${escape(it.category)}</div>
+        </div>`;
+      }).join('');
+    }
+
+    // initial
+    status.style.display='none';
+    grid.style.display='grid';
+    show();
+
+    // handlers
+    search.addEventListener('input', show);
+    cat.addEventListener('change', show);
+    refresh.addEventListener('click', ()=>{ status.style.display='block'; status.textContent='Refreshing...'; load(); });
+
+    // QR link
+    const base = location.href.split('?')[0];
+    qrLink.href = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(base + '?table=1');
+    qrLink.textContent = 'Generate QR for Table 1';
+  }
+
+  // start
+  await load();
+})();
+</script>
+</body>
+</html>

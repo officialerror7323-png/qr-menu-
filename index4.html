@@ -1,0 +1,224 @@
+<!doctype html>
+<!--
+  QR-Menu-Professional.html
+  - Professional, high-tech responsive menu site (no ordering, read-only)
+  - Replace the CONFIG values below: SHEET_ID, SHEET_NAME, CAFE_NAME
+  - Host on GitHub Pages (push to repo and enable Pages) or any static host.
+  - Images: use image_url column in your sheet. Prefer raw.githubusercontent or stable CDN links.
+-->
+<html lang="hi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>QR Menu — Professional</title>
+  <meta name="description" content="Modern QR Menu - live from Google Sheets" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg-1: #0b1020; /* deep navy */
+      --bg-2: #081524; /* darker */
+      --accent: #00e0a1; /* neon mint */
+      --muted: #9aa4b2;
+      --card: rgba(255,255,255,0.03);
+      --glass: rgba(255,255,255,0.04);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;background:linear-gradient(180deg,var(--bg-1),var(--bg-2));color:#e6eef6;-webkit-font-smoothing:antialiased}
+
+    /* Container */
+    .site{max-width:1100px;margin:28px auto;padding:20px}
+
+    /* Header */
+    header{display:flex;align-items:center;gap:18px;justify-content:space-between}
+    .brand{display:flex;align-items:center;gap:14px}
+    .logo{width:64px;height:64px;border-radius:12px;background:linear-gradient(135deg,#2b2f45, #0f1724);display:flex;align-items:center;justify-content:center;box-shadow:0 6px 30px rgba(0,0,0,0.6), inset 0 -6px 20px rgba(255,255,255,0.02)}
+    .logo img{width:50px;height:50px;object-fit:contain;border-radius:8px}
+    .cafename{font-size:20px;font-weight:700;letter-spacing:0.2px}
+    .tag{font-size:13px;color:var(--muted);margin-top:4px}
+
+    /* Hero */
+    .hero{display:grid;grid-template-columns:1fr 320px;gap:18px;margin-top:18px}
+    .hero-card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:18px;border-radius:14px;box-shadow:0 8px 40px rgba(2,6,23,0.6)}
+    .hero-left h1{margin:0;font-size:32px;line-height:1.05}
+    .hero-left p{color:var(--muted);margin-top:8px}
+    .hero-right{display:flex;flex-direction:column;gap:10px;align-items:center;justify-content:center}
+    .cover{width:100%;height:180px;border-radius:12px;object-fit:cover;display:block}
+
+    /* Controls */
+    .controls{display:flex;gap:10px;align-items:center;margin-top:14px}
+    .search{flex:1;padding:10px 12px;border-radius:10px;background:var(--glass);border:1px solid rgba(255,255,255,0.03);color:inherit}
+    .select{padding:10px 12px;border-radius:10px;background:transparent;border:1px solid rgba(255,255,255,0.04);color:inherit}
+
+    /* Grid */
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;margin-top:18px}
+    .card{background:var(--card);padding:12px;border-radius:12px;overflow:hidden;border:1px solid rgba(255,255,255,0.02);transition:transform .18s cubic-bezier(.2,.9,.3,1), box-shadow .18s}
+    .card:hover{transform:translateY(-6px);box-shadow:0 20px 50px rgba(2,6,23,0.6)}
+    .thumb{width:100%;height:150px;object-fit:cover;border-radius:8px;background:#0b1220}
+    .meta{display:flex;justify-content:space-between;align-items:center;margin-top:10px}
+    .name{font-weight:700}
+    .price{font-weight:800;color:var(--accent)}
+    .desc{color:var(--muted);font-size:13px;margin-top:8px}
+    .badge{display:inline-block;padding:6px 8px;border-radius:999px;font-size:12px}
+    .avail{background:rgba(0,224,161,0.12);color:var(--accent)}
+    .out{background:rgba(255,80,80,0.08);color:#ff8b8b}
+
+    /* Footer */
+    footer{margin-top:20px;color:var(--muted);font-size:13px;text-align:center}
+
+    /* Responsive */
+    @media (max-width:900px){.hero{grid-template-columns:1fr}.hero-right{order:2}.hero-left{order:1}}
+  </style>
+</head>
+<body>
+  <div class="site">
+    <header>
+      <div class="brand">
+        <div class="logo" aria-hidden>
+          <!-- Optional small logo: replace src or keep simple icon -->
+          <img src="https://i.imgur.com/8Km9tLL.png" alt="logo"/>
+        </div>
+        <div>
+          <div class="cafename" id="cafename">REPLACE_CAFE_NAME</div>
+          <div class="tag">Modern Digital Menu • Live updates</div>
+        </div>
+      </div>
+      <div style="text-align:right;color:var(--muted)">
+        <div style="font-weight:600">Open Hours</div>
+        <div style="font-size:13px">8:00 AM – 10:30 PM</div>
+      </div>
+    </header>
+
+    <div class="hero">
+      <div class="hero-card hero-left">
+        <h1 id="headline">Welcome to <span style="color:var(--accent)">REPLACE_CAFE_NAME</span></h1>
+        <p>Scan the QR on your table to view our live menu. Images & prices are managed centrally — instant updates, zero printing cost.</p>
+
+        <div class="controls">
+          <input id="search" class="search" placeholder="Search menu (eg. coffee, sandwich)..." />
+          <select id="category" class="select"><option value="">All Categories</option></select>
+        </div>
+
+        <div id="grid" class="grid" aria-live="polite"></div>
+      </div>
+
+      <div class="hero-card hero-right">
+        <img class="cover" src="https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3&s=placeholder" alt="coffee cover" />
+        <div style="text-align:center;color:var(--muted)">High‑contrast modern layout • Fast on mobiles</div>
+        <div style="margin-top:8px;text-align:center">
+          <a id="qrLink" href="#" style="text-decoration:none;background:transparent;color:var(--accent);font-weight:600">Scan this QR on table to open</a>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <div>Powered by • YourCompanyName</div>
+    </footer>
+  </div>
+
+  <script>
+    // ===== CONFIG - REPLACE THESE =====
+    const SHEET_ID = 'REPLACE_WITH_SHEET_ID'; // e.g. 1aBcD_EfGhIJKlmnOPqRstUvWxYz
+    const SHEET_NAME = 'Menu'; // sheet tab name
+    const CAFE_NAME = 'Your Café Name';
+    // ===== END CONFIG =====
+
+    // Update visible cafe name
+    document.getElementById('cafename').textContent = CAFE_NAME;
+    document.getElementById('headline').innerHTML = `Welcome to <span style="color:var(--accent)">${CAFE_NAME}</span>`;
+
+    // GVIZ endpoint
+    const endpoint = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?sheet=${encodeURIComponent(SHEET_NAME)}&tqx=out:json`;
+
+    const grid = document.getElementById('grid');
+    const searchInput = document.getElementById('search');
+    const categorySelect = document.getElementById('category');
+
+    let items = [];
+
+    function parseGviz(respText){
+      const jsonText = respText.replace(/^[^\(]*\(/, '').replace(/\);?$/, '');
+      return JSON.parse(jsonText);
+    }
+
+    function toItems(table){
+      const cols = table.cols.map(c => (c.label||c.id).toString().trim().toLowerCase());
+      return table.rows.map(r => {
+        const obj = {};
+        r.c.forEach((cell,i)=>{
+          obj[cols[i]] = cell ? (cell.v !== undefined ? cell.v : cell.f) : '';
+        });
+        return obj;
+      });
+    }
+
+    function buildCategories(){
+      const cats = Array.from(new Set(items.map(i=> (i.category||'Others').toString().trim()))).filter(Boolean);
+      categorySelect.innerHTML = '<option value="">All Categories</option>' + cats.map(c=>`<option value="${c}">${c}</option>`).join('');
+    }
+
+    function renderList(filtered){
+      grid.innerHTML = '';
+      if(filtered.length === 0){
+        grid.innerHTML = '<div style="color:var(--muted);padding:18px">No items found.</div>';
+        return;
+      }
+      filtered.forEach(it=>{
+        const div = document.createElement('div');
+        div.className = 'card';
+        const imgUrl = it.image_url || '';
+        const available = (String(it.available||'').toLowerCase() === 'no' || String(it.available||'').toLowerCase() === 'false') ? false : true;
+        div.innerHTML = `
+          ${ imgUrl ? `<img loading="lazy" class="thumb" src="${imgUrl}" alt="${(it.name||'').replace(/"/g,'')}">` : '' }
+          <div class="meta"><div class="name">${it.name||''}</div><div class="price">₹ ${it.price||''}</div></div>
+          <div class="desc">${it.desc||''}</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px">
+            <div class="small" style="color:var(--muted);font-size:13px">${it.category||''}</div>
+            <div class="badge ${available ? 'avail' : 'out'}">${available ? 'Available' : 'Out'}</div>
+          </div>
+        `;
+        grid.appendChild(div);
+      });
+    }
+
+    function applyFilters(){
+      const q = (searchInput.value||'').toLowerCase().trim();
+      const cat = categorySelect.value;
+      const filtered = items.filter(it=>{
+        const matchesQ = q === '' || ((it.name||'').toString().toLowerCase().includes(q) || (it.desc||'').toString().toLowerCase().includes(q));
+        const matchesCat = !cat || ((it.category||'').toString() === cat);
+        return matchesQ && matchesCat;
+      });
+      renderList(filtered);
+    }
+
+    async function loadSheet(){
+      try{
+        grid.innerHTML = '<div style="padding:18px;color:var(--muted)">Loading menu...</div>';
+        const res = await fetch(endpoint);
+        const text = await res.text();
+        const parsed = parseGviz(text);
+        items = toItems(parsed.table);
+        buildCategories();
+        applyFilters();
+        // set a helpful QR link placeholder
+        const qrLink = document.getElementById('qrLink');
+        qrLink.href = window.location.href;
+        qrLink.textContent = 'Open this menu link (use in QR generator)';
+      }catch(err){
+        console.error(err);
+        grid.innerHTML = '<div style="color:#ffb3b3;padding:18px">Menu load failed. Check SHEET_ID and sharing settings (Viewer).</div>';
+      }
+    }
+
+    searchInput.addEventListener('input', ()=>applyFilters());
+    categorySelect.addEventListener('change', ()=>applyFilters());
+
+    // initial load
+    loadSheet();
+    // refresh every 90s
+    setInterval(loadSheet, 90000);
+  </script>
+</body>
+</html>
